@@ -31,7 +31,7 @@ fn main() {
 
     use std::process::Command;
 
-    plot.write_html("relu_plot.html");
+    plot.write_html("plots/relu_plot.html");
 
     Command::new("open")
         .arg("relu_plot.html")
