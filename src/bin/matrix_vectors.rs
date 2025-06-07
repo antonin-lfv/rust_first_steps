@@ -57,4 +57,12 @@ fn main() {
     // m (5x5) · v (5x1) = (5x1)
     let result = m.dot(&v);
     println!("Produit m · v =\n{}", result);
+
+    // transposition de la matrice (créé une vue, pas une copie)
+    let m_transpose = m.t();
+    println!("Matrice transposée :\n{}", m_transpose);
+
+    // transposition de la matrice (créé une copie)
+    let m_transpose_copy = m.t().to_owned();
+    println!("Matrice transposée (copie) :\n{}", m_transpose_copy);
 }
