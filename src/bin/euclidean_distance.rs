@@ -18,8 +18,8 @@ fn main() {
 /// Calcule la distance euclidienne entre deux vecteurs de même taille en utilisant les slices.
 /// 
 /// # Arguments
-/// * `x` - Le premier vecteur.
-/// * `y` - Le second vecteur.
+/// * `x` - Le premier vecteur, qui est une reférence à un slice de f64.
+/// * `y` - Le second vecteur, qui est une référence à un slice de f64.
 /// 
 /// # Returns
 /// * La distance euclidienne entre les deux vecteurs.
