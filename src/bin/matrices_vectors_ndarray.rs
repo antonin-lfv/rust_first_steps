@@ -48,7 +48,7 @@ fn main() {
     println!("Vecteur aléatoire :\n{}\n", v);
 
     // Générer une matrice 2D de taille 5x5 avec valeurs entre 0 et 10
-    let m: Array2<f64> = Array2::random((5, 5), Uniform::new(0.0, 10.0));
+    let m = create_random_uniform_array2(5, 5, 0.0, 10.0);
     println!("Matrice aléatoire :\n{}", m);
 
     // on peut également utiliser d'autres distributions comme Normal, Exp, etc
@@ -65,4 +65,10 @@ fn main() {
     // transposition de la matrice (créé une copie)
     let m_transpose_copy = m.t().to_owned();
     println!("Matrice transposée (copie) :\n{}", m_transpose_copy);
+}
+
+
+fn create_random_uniform_array2(dimension: usize, size: usize, low: f64, high: f64) -> Array2<f64> {
+    // Crée un tableau 2D de taille (dimension, size) avec des valeurs uniformément distribuées entre low et high
+    Array2::random((dimension, size), Uniform::new(low, high))
 }
