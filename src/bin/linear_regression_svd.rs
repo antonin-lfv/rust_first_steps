@@ -37,7 +37,7 @@ struct IrisRow {
 }
 
 /// Charge un fichier CSV en un DataFrame Polars
-pub fn load_csv_polars(path: &str) -> PolarsResult<DataFrame> {
+fn load_csv_polars(path: &str) -> PolarsResult<DataFrame> {
     use std::path::PathBuf;
     CsvReadOptions::default()
         .with_has_header(true)
