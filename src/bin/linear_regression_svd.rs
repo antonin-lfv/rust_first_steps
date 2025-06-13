@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // 🔍 Analyse avec Polars
     let df = load_csv_polars(path.to_str().unwrap())?;
-    plot_numeric_pairplot_polars(&df, "plots")?;
+    plot_numeric_pairplot_polars(&df, "price")?;
 
     // 📈 Entraînement avec nalgebra
     let (data, target): (DMatrix<f64>, Vec<f64>) = load_csv_nalgebra(&path)?;
@@ -28,8 +28,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let x_feat = data.column(0).into_owned();             // DVector<f64>
     let x_uni_mat = DMatrix::from_row_slice(x_feat.len(), 1, x_feat.as_slice());
     let x_uni = add_bias_column(&x_uni_mat);
-    println!("shape de x_uni : {:?}", x_uni.shape());
-    println!("shape de x_feat : {:?}", x_feat.shape());
 
     let theta_uni = linear_regression_svd(&x_uni, &y_all);
     println!("Paramètres du modèle avec une seule feature (area) :\n{}", theta_uni);
@@ -123,37 +121,41 @@ fn print_head(data: &DMatrix<f64>, n: usize) {
 PLOTTING
 */
 
-fn plot_numeric_pairplot_polars(df: &DataFrame, out_dir: &str) -> PolarsResult<()> {
-    let numeric_cols: Vec<&Series> = df
-        .iter()
-        .filter(|s| matches!(s.dtype(), DataType::Float64))
+fn plot_numeric_pairplot_polars(df: &DataFrame, target_name: &str) -> PolarsResult<()> {
+    std::fs::create_dir_all("plots")?;
+
+    let target_col = df.column(target_name)?;
+    let target_vals: Vec<f64> = target_col.cast(&DataType::Float64)?
+        .f64()?
+        .into_no_null_iter()
         .collect();
 
-    for (i, col_x) in numeric_cols.iter().enumerate() {
-        for (j, col_y) in numeric_cols.iter().enumerate() {
-            if i >= j {
-                continue;
-            }
-
-            let x_vals: Vec<f64> = col_x.f64()?.into_no_null_iter().collect();
-            let y_vals: Vec<f64> = col_y.f64()?.into_no_null_iter().collect();
-
-            let trace = Scatter::new(x_vals, y_vals)
-                .mode(Mode::Markers)
-                .name(&format!("{} vs {}", col_x.name(), col_y.name()));
-
-            let mut plot = Plot::new();
-            plot.add_trace(trace);
-            plot.set_layout(
-                plotly::layout::Layout::new()
-                    .title(&format!("{} vs {}", col_y.name(), col_x.name()))
-                    .x_axis(plotly::layout::Axis::new().title(col_x.name().to_string()))
-                    .y_axis(plotly::layout::Axis::new().title(col_y.name().to_string()))
-            );
-
-            let filename = format!("{}/{}_vs_{}.html", out_dir, col_x.name(), col_y.name());
-            plot.write_html(filename);
+    for col in df.get_columns() {
+        if col.name() == target_name {
+            continue;
         }
+
+        let feature_vals: Vec<f64> = col.cast(&DataType::Float64)?
+            .f64()?
+            .into_no_null_iter()
+            .collect();
+
+        let trace = Scatter::new(feature_vals, target_vals.clone())
+            .mode(Mode::Markers)
+            .name(&format!("{} vs {}", target_name, col.name()));
+
+        let mut plot = Plot::new();
+        plot.add_trace(trace);
+        plot.set_layout(
+            plotly::layout::Layout::new()
+                .title(&format!("{} vs {}", target_name, col.name()))
+                .x_axis(plotly::layout::Axis::new().title(col.name().to_string()))
+                .y_axis(plotly::layout::Axis::new().title(target_name.to_string()))
+        );
+
+        let filename = format!("plots/target_vs_{}.html", col.name());
+        println!("Saving plot to {}", filename);
+        plot.write_html(filename);
     }
 
     Ok(())
@@ -164,8 +166,6 @@ fn plot_regression_result(x: &DVector<f64>, y_true: &DVector<f64>, theta: &DVect
     // Prédiction : y_pred = θ₀ + θ₁ * x
     let y_pred: Vec<f64> = x.iter().map(|xi| theta[0] + theta[1] * xi).collect();
 
-    println!("x: {:?}", x);
-    println!("y_true: {:?}", y_true);
     let trace_points = Scatter::new(x.as_slice().to_vec(), y_true.as_slice().to_vec())
         .mode(Mode::Markers)
         .name("Données");
