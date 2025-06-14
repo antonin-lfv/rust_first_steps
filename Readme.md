@@ -5,7 +5,6 @@
   Getting started with Rust
 </h1>
 
----
 
 ### 🛠️ Build
 
@@ -21,14 +20,14 @@ To run a specific example:
 cargo run --bin <file_name_without_rs>
 ```
 
----
+
 
 ### 🤖 Machine Learning
 
 - [Linear Regression (SVD)](src/bin/linear_regression_svd.rs) – Linear regression implemented from scratch using Singular Value Decomposition.
 - [K-means](src/bin/kmeans.rs) – *(in progress)* Unsupervised clustering using centroids and Euclidean distance.
 
----
+
 
 ### 🧰 Utilities
 
@@ -38,7 +37,7 @@ cargo run --bin <file_name_without_rs>
 - [Linear Algebra with `nalgebra`](src/bin/matrices_vectors_nalgebra.rs) – Matrix and vector operations using the `nalgebra` crate.
 - [Linear Algebra with `ndarray`](src/bin/matrices_vectors_ndarray.rs) – Alternative linear algebra toolkit closer to NumPy-style arrays.
 
----
+
 
 ### 📁 Project Structure
 
