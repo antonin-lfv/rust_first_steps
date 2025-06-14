@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // 🔍 Analyse avec Polars
     let df = load_csv_polars(path.to_str().unwrap())?;
-    plot_numeric_pairplot_polars(&df, "price")?;
+    plot_features_and_target(&df, "price")?;
 
     // 📈 Entraînement avec nalgebra
     let (data, target): (DMatrix<f64>, Vec<f64>) = load_csv_nalgebra(&path)?;
@@ -25,9 +25,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Paramètres du modèle (theta complet) :\n{}", theta_all);
 
     // --- Modèle univarié (juste "area")
-    let x_feat = data.column(0).into_owned();             // DVector<f64>
+    let x_feat = data.column(0).into_owned(); // DVector<f64>
     let x_uni_mat = DMatrix::from_row_slice(x_feat.len(), 1, x_feat.as_slice());
     let x_uni = add_bias_column(&x_uni_mat);
+    print_head(&x_uni, 5);
 
     let theta_uni = linear_regression_svd(&x_uni, &y_all);
     println!("Paramètres du modèle avec une seule feature (area) :\n{}", theta_uni);
@@ -44,11 +45,13 @@ MODEL
 
 // Entraîne un modèle de régression linéaire en utilisant la SVD
 fn linear_regression_svd(x: &DMatrix<f64>, y: &DVector<f64>) -> DVector<f64> {
+    // On applique la SVD sur la matrice X
     let svd = x.clone().svd(true, true);
 
-    let u = svd.u.unwrap();
+    // On extrait U, V^T et les valeurs singulières contenues dans sigma
+    let u = svd.u.unwrap(); // unwrap() permet de récupérer la matrice U et de retourner une erreur si elle n'existe pas
     let v_t = svd.v_t.unwrap();
-    let sigma = svd.singular_values;
+    let sigma = svd.singular_values;  // pas de unwrap() ici car il n'est pas enveloppé dans une Option et est toujours calculé et stocké directement
 
     let sigma_pinv = DMatrix::from_diagonal(
         &sigma.map(|s| if s.abs() > 1e-10 { 1.0 / s } else { 0.0 })
@@ -76,6 +79,7 @@ fn add_bias_column(x: &DMatrix<f64>) -> DMatrix<f64> {
 DATA MANAGEMENT
 */
 
+// Structure pour représenter une ligne du CSV housing.csv
 #[derive(Debug, Deserialize)]
 struct HousingRow {
     price: f64,
@@ -83,6 +87,7 @@ struct HousingRow {
     distance_from_center: f64,
 }
 
+// Charge le fichier CSV avec Polars
 fn load_csv_polars(path: &str) -> PolarsResult<DataFrame> {
     use std::path::PathBuf;
     CsvReadOptions::default()
@@ -91,6 +96,7 @@ fn load_csv_polars(path: &str) -> PolarsResult<DataFrame> {
         .finish()
 }
 
+// Charge le fichier CSV avec nalgebra
 fn load_csv_nalgebra(path: &Path) -> Result<(DMatrix<f64>, Vec<f64>), Box<dyn Error>> {
     let file = File::open(path)?;
     let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);
@@ -110,6 +116,7 @@ fn load_csv_nalgebra(path: &Path) -> Result<(DMatrix<f64>, Vec<f64>), Box<dyn Er
     Ok((data, labels))
 }
 
+// Affiche les premières lignes de la matrice de données
 fn print_head(data: &DMatrix<f64>, n: usize) {
     println!("Premières lignes ({} premières) :", n);
     for i in 0..n.min(data.nrows()) {
@@ -121,7 +128,8 @@ fn print_head(data: &DMatrix<f64>, n: usize) {
 PLOTTING
 */
 
-fn plot_numeric_pairplot_polars(df: &DataFrame, target_name: &str) -> PolarsResult<()> {
+// Affiche chaque feature par rapport à la cible
+fn plot_features_and_target(df: &DataFrame, target_name: &str) -> PolarsResult<()> {
     std::fs::create_dir_all("plots")?;
 
     let target_col = df.column(target_name)?;
@@ -146,6 +154,7 @@ fn plot_numeric_pairplot_polars(df: &DataFrame, target_name: &str) -> PolarsResu
 
         let mut plot = Plot::new();
         plot.add_trace(trace);
+        // Configuration du layout du graphique
         plot.set_layout(
             plotly::layout::Layout::new()
                 .title(&format!("{} vs {}", target_name, col.name()))
@@ -154,7 +163,6 @@ fn plot_numeric_pairplot_polars(df: &DataFrame, target_name: &str) -> PolarsResu
         );
 
         let filename = format!("plots/target_vs_{}.html", col.name());
-        println!("Saving plot to {}", filename);
         plot.write_html(filename);
     }
 
@@ -177,6 +185,7 @@ fn plot_regression_result(x: &DVector<f64>, y_true: &DVector<f64>, theta: &DVect
     let mut plot = Plot::new();
     plot.add_trace(trace_points);
     plot.add_trace(trace_line);
+    // Configuration du layout du graphique
     plot.set_layout(
         plotly::Layout::new()
             .title(format!("Régression sur {}", name))
