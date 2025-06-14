@@ -24,7 +24,7 @@ cargo run --bin <file_name_without_rs>
 
 ### 🤖 Machine Learning
 
-- [Linear Regression (SVD)](src/bin/linear_regression_svd.rs) – Linear regression implemented from scratch using Singular Value Decomposition.
+- [Linear Regression using SVD](src/bin/linear_regression_svd.rs) – Linear regression implemented from scratch using Singular Value Decomposition.
 - [K-means](src/bin/kmeans.rs) – *(in progress)* Unsupervised clustering using centroids and Euclidean distance.
 
 
